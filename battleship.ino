@@ -6,7 +6,7 @@
  * pin 11 -> CS
  * pin 10 -> CLK
  */
-LedControl lc = LedControl(12,10,11,1);
+LedControl lc = LedControl(12,10,11,2);
 unsigned long delaytime = 1000;
 
 const int rows = 8;
@@ -25,15 +25,15 @@ void initializeBoard(int board[][columns])
     }
 }
 
-void testSetLed(int row, int col)
+void testSetLed(int row, int col, int maxnr)
 {
-  lc.setLed(0,row,col,true);
+  lc.setLed(maxnr,row,col,true);
   //delay(delaytime);
   //lc.setLed(0,row,col,false);
   //delay(delaytime);
 }
 
-void testAllLeds(int board[][columns])
+void testAllLeds(int board[][columns], int maxnr)
 {
   int i,j;
   for(i=0; i<rows; i++)
@@ -41,12 +41,12 @@ void testAllLeds(int board[][columns])
     {
       if(board[i][j])
       {
-        testSetLed(i,j);     
+        testSetLed(i,j, maxnr);     
       }
     }
-  delay(delaytime*5);
-  lc.clearDisplay(0);
-  delay(delaytime);
+  //delay(delaytime*5);
+  //lc.clearDisplay(0);
+  //delay(delaytime);
 }
 
 void setup() 
@@ -58,10 +58,13 @@ void setup()
    we have to do a wakeup call
    */
   lc.shutdown(0,false);
+  lc.shutdown(1,false);
   /* Set the brightness to a medium values */
   lc.setIntensity(0,1);
+  lc.setIntensity(1,1);
   /* and clear the display */
   lc.clearDisplay(0);
+  lc.clearDisplay(1);
   /* Initialize the boards */
   initializeBoard(playerOneBoard);
   initializeBoard(playerTwoBoard);
@@ -69,6 +72,6 @@ void setup()
 
 void loop() 
 {
-  testAllLeds(playerOneBoard);
-  testAllLeds(playerTwoBoard);
+  testAllLeds(playerOneBoard, 0);
+  testAllLeds(playerTwoBoard, 1);
 }
