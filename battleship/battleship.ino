@@ -1,7 +1,6 @@
 #include <LedControl.h>
 
 /* Led controller for two MAX7219
- * Change 4th parameter to 2 !!!!!!!!!!!!!!
  * pin 12 -> DataIn
  * pin 11 -> CS
  * pin 10 -> CLK
@@ -11,29 +10,86 @@ unsigned long delaytime = 1000;
 
 const int rows = 8;
 const int columns = 8;
-
+const int numberOfShips = 5;
 int playerOneBoard[rows][columns];
 int playerTwoBoard[rows][columns];
+int ships[] = {4,3,3,2,2};
 
-void initializeBoard(int board[][columns])
+void clearBoard(int board[][columns])
 {
   int i,j;
   for(i=0; i<rows; i++)
     for(j=0; j<columns; j++)
-    {
-      board[i][j] = random() % 2;
-    }
+      board[i][j] = 0;
 }
 
-void testSetLed(int row, int col, int maxnr)
+void initializeBoard(int board[][columns])
 {
-  lc.setLed(maxnr,row,col,true);
-  //delay(delaytime);
-  //lc.setLed(0,row,col,false);
-  //delay(delaytime);
+  int x = 0, y = 0, flag, j, v;
+ 
+  for(int i=0; i<numberOfShips; i++)
+  {
+    flag = 0;
+    v = random() % 2;
+    /* 0 - horizontal
+     * 1 - vertical
+     */
+    if(v)
+    {
+      while(!flag)
+      {
+        x = random() % (rows - ships[i]);
+        y = random() % columns;
+        if(board[x][y])
+          /* (x,y) position already taken */
+          continue;
+        else
+        {
+          /* fill the column*/
+          int temp = x;
+          flag = 1;
+          for(j=0; j<ships[i]; j++,temp++)
+          {
+            if(board[temp][y])
+              flag = 0;
+          }
+          if(!flag)
+            continue;
+          for(j=0; j<ships[i]; j++,x++)
+            board[x][y] = 1;
+        }
+      }
+    }
+    else
+    {
+      while(!flag)
+      {
+        x = random() % rows;
+        y = random() % (columns - ships[i]);
+        if(board[x][y])
+          /* (x,y) position already taken */
+          continue;
+        else
+        {
+          /* fill the row*/
+          int temp = y;
+          flag = 1;
+          for(j=0; j<ships[i]; j++,temp++)
+          {
+            if(board[x][temp])
+              flag = 0;
+          }
+          if(!flag)
+            continue;
+          for(j=0; j<ships[i]; j++,y++)
+            board[x][y] = 1;
+        }
+      }
+    }
+  }
 }
 
-void testAllLeds(int board[][columns], int maxnr)
+void showBoard(int board[][columns], int addr)
 {
   int i,j;
   for(i=0; i<rows; i++)
@@ -41,12 +97,9 @@ void testAllLeds(int board[][columns], int maxnr)
     {
       if(board[i][j])
       {
-        testSetLed(i,j, maxnr);     
+        lc.setLed(addr,i,j,true);
       }
     }
-  //delay(delaytime*5);
-  //lc.clearDisplay(0);
-  //delay(delaytime);
 }
 
 void setup() 
@@ -71,7 +124,7 @@ void setup()
 }
 
 void loop() 
-{
-  testAllLeds(playerOneBoard, 0);
-  testAllLeds(playerTwoBoard, 1);
+{ 
+  showBoard(playerOneBoard, 0);
+  showBoard(playerTwoBoard, 1);
 }
