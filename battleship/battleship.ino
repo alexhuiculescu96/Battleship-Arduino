@@ -1,11 +1,14 @@
 #include <LedControl.h>
+<<<<<<< HEAD
+=======
+#include "../globals.cpp"
+>>>>>>> 1b68b84962f52a00fa7db05bcdf9771715767bdf
 /* Led controller for two MAX7219
  * pin 12 -> DataIn
  * pin 11 -> CS
  * pin 10 -> CLK
  */
 LedControl lc = LedControl(12,10,11,2);
-unsigned long delaytime = 1000;
 
 const int rows = 8;
 const int columns = 8; 
