@@ -1,5 +1,4 @@
 #include <LedControl.h>
-
 /* Led controller for two MAX7219
  * pin 12 -> DataIn
  * pin 11 -> CS
@@ -9,7 +8,7 @@ LedControl lc = LedControl(12,10,11,2);
 unsigned long delaytime = 1000;
 
 const int rows = 8;
-const int columns = 8;
+const int columns = 8; 
 const int numberOfShips = 5;
 int playerOneBoard[rows][columns];
 int playerTwoBoard[rows][columns];
@@ -112,7 +111,7 @@ void setup()
    */
   lc.shutdown(0,false);
   lc.shutdown(1,false);
-  /* Set the brightness to a medium values */
+  /* Set the brightness to lowest values */
   lc.setIntensity(0,1);
   lc.setIntensity(1,1);
   /* and clear the display */
@@ -122,9 +121,23 @@ void setup()
   initializeBoard(playerOneBoard);
   initializeBoard(playerTwoBoard);
 }
-
+long int count=0;
+boolean currentValue=false;
 void loop() 
 { 
-  showBoard(playerOneBoard, 0);
-  showBoard(playerTwoBoard, 1);
+ // showBoard(playerOneBoard, 0);
+ // showBoard(playerTwoBoard, 1);
+  //delay(5);
+  count++;
+  if(count == 2)
+  { 
+    currentValue = !currentValue; 
+    lc.setLed(0,1,1,false);
+  } else if(count == 20)
+    {
+    lc.setLed(0,1,1,true);
+      count = 0;
+    }
+  lc.setLed(0,1,2,true);
+  lc.setLed(1,1,1,true);
 }
