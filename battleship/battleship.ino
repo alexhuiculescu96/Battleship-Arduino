@@ -1,5 +1,4 @@
 #include <LedControl.h>
-#include "../globals.cpp"
 /* Led controller for two MAX7219
  * pin 12 -> DataIn
  * pin 11 -> CS
