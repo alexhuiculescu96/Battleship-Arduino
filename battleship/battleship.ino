@@ -1,5 +1,5 @@
 #include <LedControl.h>
-
+#include "../globals.cpp"
 /* Led controller for two MAX7219
  * Change 4th parameter to 2 !!!!!!!!!!!!!!
  * pin 12 -> DataIn
@@ -7,13 +7,8 @@
  * pin 10 -> CLK
  */
 LedControl lc = LedControl(12,10,11,2);
-unsigned long delaytime = 1000;
 
-const int rows = 8;
-const int columns = 8;
 
-int playerOneBoard[rows][columns];
-int playerTwoBoard[rows][columns];
 
 void initializeBoard(int board[][columns])
 {
