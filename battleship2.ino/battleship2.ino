@@ -4,9 +4,9 @@
 #define delayTime = 1000
 enum LedState
 {
-  LED_ON,
-  LED_OFF,
-  LED_INTERMITENT
+  LED_ON = 1,
+  LED_OFF = 0,
+  LED_INTERMITENT = 2
 }
 /* Led controller for two MAX7219
  * Change 4th parameter to 2 !!!!!!!!!!!!!!
@@ -198,9 +198,39 @@ void retreat()
 }
 void enter()
 {
-  if(isCursorVisible) {
-    //TODO save the attack in your matrixes and enemy's matrixes
-    //Check if the shot is a hit
+  if(!isCursorVisible) return;
+  char rowNumber = currentCursor.row;
+  char columnNumber = currentCursor.line;
+  Player enemy = players[(currentPlayer+1)%2];
+  bool isAHit = enemy.beingAttacked(rowNumber, columnNumber)
+  if(isAHit) {
+    //There is a hit
+    makeHitAnimation(currentPlayer,rowNumber, columnNumber);
+    players[currentPlayer].hasJustAttacked(rowNumber, columnNumber, true);
+    //Since it's a hit, we don't change the player
+    return;
+  }
+  players[currentPlayer].hasJustAttacked(rowNumber, columnNumber, true);
+  //Change the player
+  changeCurrentPlayer((currentPlayer+1)%2);
+
+}
+
+changeCurrentPlayer(char newPlayerNumber) {
+  char oldPlayer = newPlayerNumber;
+  currentPlayer = newPlayerNumber;
+  currentCursor = currentPlayer.cursor;
+  currentActiveMatrix = currentPlayer.getCurrentPage();
+}
+
+void makeHitAnimation(char deviceId, rowNumber, columnNumber) {
+  bool value = true;
+  char i;
+  for(i=0;i<9;i++)
+  {
+    lc.setLed(deviceId,rowNumber,columnNumber,value);
+    value = !value;
+    delay(300);
   }
 }
 void buttonPressed(char pressedButton)
@@ -264,6 +294,22 @@ public:
   Cursor cursor;
   char currentPage;
   bool currentPageHasChanged;
+  bool beingAttacked(char rowNumber, char columnNumber) {
+    //TODO instead of returning <bool>, return a custom struct
+    //with another info, like: a ship was destroyed, and ship's coords
+    this.allEnemyShots[rowNumber][columnNumber] = LED_ON;
+    if(this.myShipsMatrix[rowsNumber][columnsNumber] = LED_ON) {
+    this.allEnemyHits[rowNumber][columnNumber] = LED_ON;
+    return true;
+    }
+    return false;
+  }
+  bool hasJustAttacked(char rowNumber, char columnNumber, bool isHit) {
+    //TODO save ships coordonates in generateShips method and check if this shot destroyed
+    //a ship or just damaged it. And change <isHit> arg with a custom struct
+    players[currentPlayer].allMyShots[rowNumber][columnNumber]= LED_ON;
+    players[currentPlayer].allMyHits[rowNumber][columnNumber] = LED_ON;
+  }
   Player()
   {
     this.currentPage = 0;
@@ -296,6 +342,10 @@ public:
   void switchPageRight() {
     this.currentPage = (this.currentPage + 1) % 5;
     this.currentPageHasChanged = true;
+  }
+  void changePage(char newPageNumber) {
+    this.curentPage = newPageNumber % 5;
+    this.currentPageHasChanged;
   }
 } 
 class Cursor
@@ -475,7 +525,7 @@ public:
             if (!flag)
               continue;
             for (j = 0; j < ships[i]; j++, x++)
-              matrix[x][y] = 1;
+              matrix[x][y] = LED_ON;
           }
         }
       }
@@ -501,7 +551,7 @@ public:
             if (!flag)
               continue;
             for (j = 0; j < ships[i]; j++, y++)
-              matrix[x][y] = 1;
+              matrix[x][y] = LED_ON;
           }
         }
       }
