@@ -124,10 +124,10 @@ long int count=0;
 boolean currentValue=false;
 void loop() 
 { 
- // showBoard(playerOneBoard, 0);
- // showBoard(playerTwoBoard, 1);
+  showBoard(playerOneBoard, 0);
+  showBoard(playerTwoBoard, 1);
   //delay(5);
-  count++;
+  /*count++;
   if(count == 2)
   { 
     currentValue = !currentValue; 
@@ -139,4 +139,5 @@ void loop()
     }
   lc.setLed(0,1,2,true);
   lc.setLed(1,1,1,true);
+  */
 }
