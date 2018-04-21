@@ -1,6 +1,5 @@
 //Set this depending on environment
-#define arduino false
-
+#define arduino true
 #if !arduino
     #include <iostream>
     #include "LedControl.h"
@@ -356,7 +355,7 @@ char** getPage(char pageNumber) {
 LedControl lc = LedControl(12, 10, 11, 2);
 ButtonListener listener = ButtonListener();
 GameHelper gameHelper = GameHelper();
-Player players[2](gameHelper);
+Player players[2]={Player(gameHelper), Player(gameHelper)};
 Cursor currentCursor;
 char currentPlayer = 0;
 char **currentActiveMatrix;
@@ -392,7 +391,11 @@ void displayStaticMatrix(char **matrixToDisplay,char deviceId);
 void setup()
 {
     //ON ARDUINO: change "::" with '.'
-  Serial::begin(9600);
+  #if arduino
+    Serial.begin(9600);
+  #else
+    Serial::begin(9600);
+  #endif
   randomSeed(analogRead(0));
   /*
    The MAX72XX is in power-saving mode on startup,
@@ -469,11 +472,11 @@ void displayDynamicMatrix(char **matrixToDisplay, char deviceId,bool value) {
   for(i=0;i<8;i++) {
     for(j=0;j<8;j++)
     {
-      if(matrixToDisplay[i][j] == LED_INTERMITENT) lc.set(deviceId, i, j, value);
+      if(matrixToDisplay[i][j] == LED_INTERMITENT) lc.setLed(deviceId, i, j, value);
     }
   }
   //display cursor
-  if(isCursorVisible) lc.set(deviceId, currentCursor.row,currentCursor.column, value);
+  if(isCursorVisible) lc.setLed(deviceId, currentCursor.row,currentCursor.column, value);
 }
 
 void displayStaticMatrix(char **matrixToDisplay,char deviceId)
