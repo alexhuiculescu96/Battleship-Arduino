@@ -1,6 +1,6 @@
 /****************************************************
 4x4 keyboard matrix
-By Chris Rouse Oct. 2015
+
 Connect:
 
 Row 1 to Arduino pin 2
@@ -29,13 +29,6 @@ columns link keys from top to bottom)
 ****************************************************/
 #include <LedControl.h>
 
-int rowCounter =0; // row counter
-int columnCounter =0; // column counter
-int foundColumn = 0;
-boolean foundCol = false;
-int keyValue = 0;
-int noKey = 0;
-boolean readKey = false;
 int debounce = 1; // set this to the lowest value that gives the best result
 const int row1 = 2;
 const int row2 = 3;
@@ -46,12 +39,11 @@ const int colB = 7;
 const int colC = 8;
 const int colD = 9;
 const int ledPin = 13; // onboard LED
-int x = 0;
-int y = 0;
 
-LedControl lc = LedControl(12,10,11,2);
+LedControl lc = LedControl(12, 10, 11, 2);
 
-void setup(){
+void setup()
+{
   Serial.begin(9600);
   pinMode(row1, OUTPUT);
   pinMode(row2, OUTPUT);
@@ -65,98 +57,114 @@ void setup(){
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, LOW); // turn LED off
 
-  lc.shutdown(0,false);
-  lc.shutdown(1,false);
+  lc.shutdown(0, false);
+  lc.shutdown(1, false);
   /* Set the brightness to a medium values */
-  lc.setIntensity(0,1);
-  lc.setIntensity(1,1);
+  lc.setIntensity(0, 1);
+  lc.setIntensity(1, 1);
   /* and clear the display */
   lc.clearDisplay(0);
   lc.clearDisplay(1);
-  lc.setLed(0,x,y,true);
+  lc.setLed(0, 0, 0, true);
+  lc.setLed(1, 0, 0, true);
 }
 
-void loop(){
-  if(noKey == 16){ // no keys were pressed
+int foundColumn = 0;
+boolean foundCol = false;
+int keyValue = 0;
+int noKey = 0;
+boolean readKey = false;
+int x = 0;
+int y = 0;
+
+void loop()
+{
+  if (noKey == 16)
+  {                 // no keys were pressed
     readKey = true; // keyboard is ready to accept a new keypress
   }
   noKey = 0;
-  for(rowCounter=row1; rowCounter<(row4 +1); rowCounter++){
-    scanRow(); // switch on one row at a time
-    for(columnCounter = colA; columnCounter <colD +1; columnCounter++){
-      readColumn(); // read the switch pressed
-      if (foundCol== true){
-        keyValue =(rowCounter-row1) +4*(columnCounter - colA);
+  int rowCounter = 0;
+  int result;
+  int columnCounter = 0; // column counter
+  for (rowCounter = row1; rowCounter < (row4 + 1); rowCounter++)
+  {
+    scanRow(rowCounter); // switch on one row at a time
+    for (columnCounter = colA; columnCounter < colD + 1; columnCounter++)
+    {
+      result = readColumn(columnCounter); // read the switch pressed
+      if (result == true)
+      {
+        keyValue = (rowCounter - row1) + 4 * (columnCounter - colA);
+      }
+      else
+      {
+        noKey++; // counter for number of empty columns
       }
     }
   }
-  if(readKey==true && noKey == 15){ // a key has been pressed
+  if (readKey == true && noKey == 15)
+  {                           // a key has been pressed
     Serial.println(keyValue); // used for debug
-    if (keyValue == 13){
-      digitalWrite(ledPin, !digitalRead(ledPin)); // toggles LED ON/OFF
+    if (keyValue == 1 && y < 7)
+    {
+        lc.setLed(0, x, y, false);
+        lc.setLed(1, x, y, false);
+        y++;
+        lc.setLed(0, x, y, true);
+        lc.setLed(1, x, y, true);
     }
-    else{
-      digitalWrite(ledPin, LOW);
+    else if (keyValue == 2 && x < 7)
+    {
+        lc.setLed(0, x, y, false);
+        lc.setLed(1, x, y, false);
+        x++;
+        lc.setLed(0, x, y, true);
+        lc.setLed(1, x, y, true);
     }
-  /********************************************************
-  // call to part of the sketch that will use the key number
-  */
-  if(keyValue == 1)
-  {
-    if(y<7)
+    else if (keyValue == 3 && y > 0)
     {
-      lc.setLed(0,x,y,false);
-      y++;
-      lc.setLed(0,x,y,true); 
-    } 
-  }
-  else if(keyValue == 2)
-  {
-    if(x<7)
+        lc.setLed(0, x, y, false);
+        lc.setLed(1, x, y, false);
+        y--;
+        lc.setLed(0, x, y, true);
+        lc.setLed(1, x, y, true);
+    }
+    else if (keyValue == 6 && x > 0)
     {
-      lc.setLed(0,x,y,false);
-      x++;
-      lc.setLed(0,x,y,true); 
-    } 
-  }
-  else if(keyValue == 3)
-  {
-    if(y>0)
-    {
-      lc.setLed(0,x,y,false);
-      y--;
-      lc.setLed(0,x,y,true); 
-    } 
-  }
-  else if(keyValue == 6)
-  {
-    if(x>0)
-    {
-      lc.setLed(0,x,y,false);
-      x--;
-      lc.setLed(0,x,y,true); 
-    } 
-  }
-  //*******************************************************
-  readKey = false; // rest the flag
-  delay(debounce); // debounce
+        lc.setLed(0, x, y, false);
+        lc.setLed(1, x, y, false);
+        x--;
+        lc.setLed(0, x, y, true);
+        lc.setLed(1, x, y, true);
+    }
+    //*******************************************************
+    readKey = false; // rest the flag
+    delay(debounce); // debounce
   }
 }
 
-void scanRow(){
-  for(int j =row1; j < (row4 +1); j++){
+void scanRow(int rowNumber)
+{
+  for (int j = row1; j < (row4 + 1); j++)
+  {
     digitalWrite(j, HIGH);
   }
-  digitalWrite(rowCounter , LOW); // switch on one row
+  digitalWrite(rowNumber, LOW); // switch on one row
 }
 
-void readColumn(){
-  foundColumn = digitalRead(columnCounter);
-  if(foundColumn == 0){
+bool readColumn(int columnNumber)
+{
+  foundColumn = digitalRead(columnNumber);
+  int response = foundColumn;
+  if (response == 0)
+  {
     foundCol = true;
+    return true;
   }
-  else{
-    foundCol=false;
-    noKey=noKey +1; // counter for number of empty columns
+  else
+  {
+    foundCol = false;
+    return false;
   }
 }
