@@ -97,7 +97,6 @@ public:
   void setup()
   {
     Serial.println("ButtonListener:setup");
-    Serial.begin(9600);
     pinMode(row1, OUTPUT);
     pinMode(row2, OUTPUT);
     pinMode(row3, OUTPUT);
@@ -548,7 +547,7 @@ void setup()
 }
 void loop()
 {
-  delay(200);
+  delay(1000);
   Serial.println("Main:loop");
   //The following check could be used to delay the game start until one player presses a button
   //and to support successive games
