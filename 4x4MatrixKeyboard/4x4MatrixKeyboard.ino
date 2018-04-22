@@ -69,7 +69,6 @@ void setup()
   lc.setLed(1, 0, 0, true);
 }
 
-int foundColumn = 0;
 boolean foundCol = false;
 int keyValue = 0;
 int noKey = 0;
@@ -155,16 +154,14 @@ void scanRow(int rowNumber)
 
 bool readColumn(int columnNumber)
 {
-  foundColumn = digitalRead(columnNumber);
-  int response = foundColumn;
+  int response = digitalRead(columnNumber);;
   if (response == 0)
   {
     foundCol = true;
-    return true;
   }
   else
   {
     foundCol = false;
-    return false;
   }
+  return foundCol;
 }
