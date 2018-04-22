@@ -6,8 +6,6 @@
 #else
 #include <LedControl.h>
 #endif
-#define columnsNumber 8
-#define rowsNumber 8
 #define delayTime = 1000
 
 #if !arduino
@@ -25,17 +23,15 @@ enum LedState
   LED_OFF = 0,
   LED_INTERMITENT = 2
 };
-static const int row1 = 2;
-static const int row2 = 3;
-static const int row3 = 4;
-static const int row4 = 5;
-static const int colA = 6;
-static const int colB = 7;
-static const int colC = 8;
-static const int colD = 9;
-const char numberOfShips = 5;
+static const char row1 = 2;
+static const char row2 = 3;
+static const char row3 = 4;
+static const char row4 = 5;
+static const char colA = 6;
+static const char colB = 7;
+static const char colC = 8;
+static const char colD = 9;
 char ships[] = {4, 3, 3, 2, 2};
-char columnNumber = 8;
 class ButtonListener
 {
   char pressedButtonValue = -1;
@@ -46,20 +42,21 @@ class ButtonListener
 public:
   bool listen()
   {
+    Serial.println("ButtonListener:listen; ");
     if (this->noKey == 16)
-    {// no keys were pressed
+    {                       // no keys were pressed
       this->readKey = true; // keyboard is ready to accept a new keypress
     }
     this->noKey = 0;
-    int rowCounter = 0;
-    int columnCounter = 0; // column counter
+    char rowCounter = 0;
+    char columnCounter = 0; // column counter
     for (rowCounter = row1; rowCounter < (row4 + 1); rowCounter++)
     {
       scanRow(rowCounter); // switch on one row at a time
       for (columnCounter = colA; columnCounter < colD + 1; columnCounter++)
       {
         if (readColumn(columnCounter)) // read the switch pressed
-        {//the button has been pressed
+        {                              //the button has been pressed
           this->pressedButtonValue = (rowCounter - row1) + 4 * (columnCounter - colA);
         }
         else
@@ -71,26 +68,35 @@ public:
     if (this->readKey == true && this->noKey == 15)
     {
       // a key has been pressed
-      Serial.println(this->pressedButtonValue); // used for debug
+      Serial.println("ButtonListener:listen; a button has been pressed:");
+      Serial.println(this->pressedButtonValue);
       this->buttonPressed = true;
       this->readKey = false; // rest the flag
     }
   }
 
-  boolean buttonHasBeenPressed() {
-    if(this->buttonPressed) {
+  boolean buttonHasBeenPressed()
+  {
+    Serial.println("ButtonListener:buttonHasBeenPressed; returning ");
+    Serial.println(this->buttonPressed);
+    if (this->buttonPressed)
+    {
       this->buttonPressed = false;
       return true;
-    } else return false;
+    }
+    else
+      return false;
   }
 
   char getPressedButton()
   {
+    Serial.println("ButtonListener:getPressedButton ");
     return this->pressedButtonValue;
   }
 
   void setup()
   {
+    Serial.println("ButtonListener:setup");
     Serial.begin(9600);
     pinMode(row1, OUTPUT);
     pinMode(row2, OUTPUT);
@@ -102,16 +108,20 @@ public:
     pinMode(colD, INPUT_PULLUP);
   }
 
-  bool readColumn(int columnNumber)
+  bool readColumn(char columnNumber)
   {
+    Serial.println("ButtonListener:readColumn; columnNumber = ");
+    Serial.println(columnNumber);
     //digitalRead returns 0 when button was pressed
-    int foundColumn = digitalRead(columnNumber) ? false : true;
+    char foundColumn = digitalRead(columnNumber) ? false : true;
     return foundColumn;
   }
 
-  void scanRow(int rowNumber)
+  void scanRow(char rowNumber)
   {
-    for (int j = row1; j < (row4 + 1); j++)
+    Serial.println("ButtonListener:scanRow; rowNumber = ");
+    Serial.println(rowNumber);
+    for (char j = row1; j < (row4 + 1); j++)
     {
       digitalWrite(j, HIGH);
     }
@@ -124,6 +134,7 @@ class GameHelper
 public:
   void initializeMatrix(char **matrix)
   {
+    Serial.println("GameHelper:initializeMatrix;");
     char i, j;
     for (i = 0; i < 8; i++)
       for (j = 0; j < 8; j++)
@@ -131,9 +142,9 @@ public:
   }
   void generateShips(char **matrix)
   {
+    Serial.println("GameHelper:generateShips;");
     char x = 0, y = 0, flag, j, v;
-
-    for (char i = 0; i < numberOfShips; i++)
+    for (char i = 0; i < 5; i++)
     {
       flag = 0;
       v = random() % 2;
@@ -144,8 +155,8 @@ public:
       {
         while (!flag)
         {
-          x = random() % (rowsNumber - ships[i]);
-          y = random() % columnsNumber;
+          x = random() % (8 - ships[i]);
+          y = random() % 8;
           if (matrix[x][y])
             /* (x,y) position already taken */
             continue;
@@ -170,8 +181,8 @@ public:
       {
         while (!flag)
         {
-          x = random() % rowsNumber;
-          y = random() % (columnsNumber - ships[i]);
+          x = random() % 8;
+          y = random() % (8 - ships[i]);
           if (matrix[x][y])
             /* (x,y) position already taken */
             continue;
@@ -194,23 +205,46 @@ public:
       }
     }
   }
+  char **create2DArray(char height, char width)
+  {
+    Serial.println("Player:create2DArray; h, w = ");
+    Serial.print(height);
+    Serial.print(", ");
+    Serial.println(width);
+    char **array2D = 0;
+    array2D = new char *[height];
+
+    for (char h = 0; h < height; h++)
+    {
+      array2D[h] = new char[width];
+
+      for (char w = 0; w < width; w++)
+      {
+        // fill in some initial values
+        // (filling in zeros would be more logic, but this is just for the example)
+        array2D[h][w] = w + width * h;
+      }
+    }
+
+    return array2D;
+  }
 };
 
 class Cursor
 {
 public:
-  char row;
-  char column;
-  char oldRow;
-  char oldColumn;
-  bool cursorHasMoved;
+  char row = 0;
+  char column = 0;
+  char oldRow = 0;
+  char oldColumn = 0;
+  bool cursorHasMoved = 0;
   Cursor()
   {
-    this->row = 0;
-    this->column = 0;
+    Serial.println("Cursor:Cursor;");
   }
   Cursor(char rowN, char colN)
   {
+    Serial.println("Cursor:Cursor;");
     this->row = rowN;
     this->column = colN;
     this->oldRow = rowN;
@@ -220,6 +254,7 @@ public:
   //MODE = 1 => cursor at border will move circularry
   bool moveLeft(char mode)
   {
+    Serial.println("Cursor:moveLeft;");
     if (mode == 0)
     {
       if (this->column > 0)
@@ -246,12 +281,9 @@ public:
     this->cursorHasMoved = true;
     return true;
   }
-  void deleteMoveState()
-  {
-    this->cursorHasMoved = false;
-  }
   bool moveRight(char mode)
   {
+    Serial.println("Cursor:moveRight;");
     if (mode == 0)
     {
       if (this->column < 7)
@@ -280,6 +312,7 @@ public:
   }
   bool moveUp(char mode)
   {
+    Serial.println("Cursor:moveUp;");
     if (mode == 0)
     {
       if (this->row < 7)
@@ -308,6 +341,7 @@ public:
   }
   bool moveDown(char mode)
   {
+    Serial.println("Cursor:moveDown;");
     if (mode == 0)
     {
       if (this->row > 0)
@@ -347,12 +381,24 @@ public:
   Cursor cursor;
   char currentPageNumber;
   bool currentPageHasChanged;
+  bool isAHit(char rowNumber, char columnNumber)
+  {
+    Serial.println("Player:isAHit; row, column = ");
+    Serial.print(rowNumber);
+    Serial.print(", ");
+    Serial.println(columnNumber);
+    return (this->myShipsMatrix[rowNumber][columnNumber] == LED_ON);
+  }
   bool beingAttacked(char rowNumber, char columnNumber)
   {
+    Serial.println("Player:beingAttacked; row, column = ");
+    Serial.print(rowNumber);
+    Serial.print(", ");
+    Serial.println(columnNumber);
     //TODO instead of returning <bool>, return a custom struct
     //with another info, like: a ship was destroyed, and ship's coords
     this->allEnemyShots[rowNumber][columnNumber] = LED_ON;
-    if (this->myShipsMatrix[rowsNumber][columnsNumber] == LED_ON)
+    if (isAHit(rowNumber, columnNumber))
     {
       this->allEnemyHits[rowNumber][columnNumber] = LED_ON;
       return true;
@@ -362,16 +408,24 @@ public:
   //Returns if a ship was completly destroied (UNIMPLEMENTED)
   bool hasJustAttacked(char rowNumber, char columnNumber, bool isHit)
   {
+    Serial.println("Player:beingAttacked; row, column, isHit = ");
+    Serial.print(rowNumber);
+    Serial.print(", ");
+    Serial.print(columnNumber);
+    Serial.print(", ");
+    Serial.println(isHit);
     //TODO save ships coordonates in generateShips method and check if this shot destroyed
     //a ship or just damaged it. And change <isHit> arg with a custom struct
     this->allMyShots[rowNumber][columnNumber] = LED_ON;
     this->allMyHits[rowNumber][columnNumber] = LED_ON;
     return false;
   }
-  Player(GameHelper gameHelper) : myShipsMatrix(create2DArray(8, 8)), allMyShots(create2DArray(8, 8)),
-                                  allMyHits(create2DArray(8, 8)), allEnemyShots(create2DArray(8, 8)), allEnemyHits(create2DArray(8, 8)),
+  Player(GameHelper gameHelper) : myShipsMatrix(gameHelper.create2DArray(8, 8)), allMyShots(gameHelper.create2DArray(8, 8)),
+                                  allMyHits(gameHelper.create2DArray(8, 8)), allEnemyShots(gameHelper.create2DArray(8, 8)), 
+                                  allEnemyHits(gameHelper.create2DArray(8, 8)),
                                   cursor(0, 0)
   {
+    Serial.println("Player:Player");
     this->currentPageNumber = 0;
     gameHelper.initializeMatrix(this->myShipsMatrix);
     gameHelper.generateShips(this->myShipsMatrix);
@@ -381,28 +435,10 @@ public:
     gameHelper.initializeMatrix(this->allEnemyHits);
     //this->cursor = new Cursor(0, 0);
   }
-  char **create2DArray(unsigned height, unsigned width)
-  {
-    char **array2D = 0;
-    array2D = new char *[height];
-
-    for (char h = 0; h < height; h++)
-    {
-      array2D[h] = new char[width];
-
-      for (char w = 0; w < width; w++)
-      {
-        // fill in some initial values
-        // (filling in zeros would be more logic, but this is just for the example)
-        array2D[h][w] = w + width * h;
-      }
-    }
-
-    return array2D;
-  }
 
   char **getPage(char pageNumber)
   {
+    Serial.println("Player:getPage");
     pageNumber = pageNumber % 5;
     switch (pageNumber)
     {
@@ -421,20 +457,24 @@ public:
   }
   char **getCurrentPage()
   {
+    Serial.println("Player:getCurrentPage");
     return this->getPage(currentPageNumber);
   }
   void switchPageLeft()
   {
+    Serial.println("Player:switchPageLeft");
     this->currentPageNumber = (this->currentPageNumber - 1) % 5;
     this->currentPageHasChanged = true;
   }
   void switchPageRight()
   {
+    Serial.println("Player:switchPageRight");
     this->currentPageNumber = (this->currentPageNumber + 1) % 5;
     this->currentPageHasChanged = true;
   }
   void changePage(char newPageNumber)
   {
+    Serial.println("Player:changePage");
     this->currentPageNumber = newPageNumber % 5;
     this->currentPageHasChanged = true;
   }
@@ -456,7 +496,7 @@ char **currentActiveMatrix;
 char loserPlayer = -1;
 bool gameStarted = false;
 bool isCursorVisible = false;
-int winnerCount = 0;
+char winnerCount = 0; //used for winner animation
 char count;
 
 enum action
@@ -481,9 +521,9 @@ void renderIntermitents(char **matrixToDisplay, char deviceId);
 void displayDynamicMatrix(char **matrixToDisplay, char deviceId, bool value);
 void makeHitAnimation(char deviceId, char rowNumber, char columnNumber);
 void changeCurrentPlayer(char newPlayerNumber);
-void displayStaticMatrix(char **matrixToDisplay, char deviceId);
 void setup()
 {
+  Serial.println("Main:setup");
 //ON ARDUINO: change "::" with '.'
 #if arduino
   Serial.begin(9600);
@@ -508,12 +548,8 @@ void setup()
 }
 void loop()
 {
-  delay(10);
-  listener.listen();
-  if (listener.buttonHasBeenPressed())
-  {
-    buttonPressed(listener.getPressedButton());
-  }
+  delay(200);
+  Serial.println("Main:loop");
   //The following check could be used to delay the game start until one player presses a button
   //and to support successive games
   if (!gameStarted)
@@ -526,7 +562,15 @@ void loop()
         startGame((loserPlayer + 1) % 2);
     }
     else
+    {
+      Serial.println("Main:Loop; game is not started and there is no animation");
       return;
+    }
+  }
+  listener.listen();
+  if (listener.buttonHasBeenPressed())
+  {
+    buttonPressed(listener.getPressedButton());
   }
   if (players[currentPlayer].currentPageHasChanged)
   {
@@ -537,8 +581,8 @@ void loop()
   }
   if (currentCursor.cursorHasMoved)
   {
-    //After the cursor has moved, restore the previous led to it's initial state
-    //Otherwise, bacause cursor is intermitent, it's state would be lost
+    //After the cursor has moved, restore the led from the previous cursor position to it's initial state
+    //Otherwise, it's state will be lost
     currentCursor.cursorHasMoved = false;
     char r = currentCursor.oldRow;
     char c = currentCursor.oldColumn;
@@ -554,17 +598,23 @@ void loop()
 
 void displayWinnerMessage(char winner)
 {
+  Serial.println("Main:displayWinnerMessage; winner = ");
+  Serial.println(winner);
   winnerCount++;
-  for (int i = 0; i < 8; i++)
+  for (char i = 0; i < 8; i++)
     lc.setRow(winner, i, true);
 }
 void displayLoserMessage(char loser)
 {
-  for (int i = 0; i < 8; i++)
+  Serial.println("Main:displayLoserMessage");
+  Serial.println(loser);
+  for (char i = 0; i < 8; i++)
     lc.setRow(loser, i, false);
 }
 void renderIntermitents(char **matrixToDisplay, char deviceId)
 {
+  Serial.println("Main:renderIntermitents; deviceId = ");
+  Serial.println(deviceId);
   count++;
   if (count == 50)
   {
@@ -578,6 +628,10 @@ void renderIntermitents(char **matrixToDisplay, char deviceId)
 }
 void displayDynamicMatrix(char **matrixToDisplay, char deviceId, bool value)
 {
+  Serial.println("Main:displayDynamicMatrix; deviceId, value = ");
+  Serial.print(deviceId);
+  Serial.print(", ");
+      Serial.println(value);
   char i, j;
   for (i = 0; i < 8; i++)
   {
@@ -594,6 +648,7 @@ void displayDynamicMatrix(char **matrixToDisplay, char deviceId, bool value)
 
 void displayStaticMatrix(char **matrixToDisplay, char deviceId)
 {
+  Serial.println("Main:displayStaticMatrix");
   char i, j;
   for (i = 0; i < 8; i++)
   {
@@ -608,18 +663,26 @@ void displayStaticMatrix(char **matrixToDisplay, char deviceId)
 }
 bool isCursorActiveOnPage(char pageNumber)
 {
+  Serial.println("Main:isCursorActiveOnPage; pageNumber = ");
+  Serial.println(pageNumber);
+  Serial.print("Main:isCursorActiveOnPage; returning ");
+  Serial.println(pageNumber == 1);
   if (pageNumber == 1)
     return true;
   return false;
 }
 void playerHasRetreated(char loser)
 {
+  Serial.println("Main:playerHasRetreated; loser = ");
+  Serial.println(loser);
   //TODO display something to show that the game has ended
   gameStarted = false;
   loserPlayer = loser;
 }
 void startGame(char firstPlayer)
 {
+  Serial.println("Main:startGame; firstPlayer = ");
+  Serial.println(firstPlayer);
   players[0] = Player(gameHelper);
   players[1] = Player(gameHelper);
   if (firstPlayer != 0 && firstPlayer != 1)
@@ -640,46 +703,59 @@ void startGame(char firstPlayer)
 }
 void moveCursorLeft()
 {
+  Serial.println("Main:moveCursorLeft;");
   if (isCursorVisible)
     currentCursor.moveLeft(1);
 }
 void moveCursorRight()
 {
+  Serial.println("Main:moveCursorRight;");
   if (isCursorVisible)
     currentCursor.moveRight(1);
 }
 void moveCursorUp()
 {
+  Serial.println("Main:moveCursorUp;");
   if (isCursorVisible)
     currentCursor.moveUp(1);
 }
 void moveCursorDown()
 {
+  Serial.println("Main:moveCursorDown;");
   if (isCursorVisible)
     currentCursor.moveDown(1);
 }
 void switchPageLeft()
 {
+  Serial.println("Main:switchPageLeft;");
   players[currentPlayer].switchPageLeft();
 }
 void switchPageRight()
 {
+  Serial.println("Main:switchPageRight;");
   players[currentPlayer].switchPageLeft();
 }
 void retreat()
 {
+  Serial.println("Main:retreat;");
   playerHasRetreated(currentPlayer);
 }
 void enter()
 {
+  Serial.println("Main:enter;rowNumber, columnNumber =");
   if (!isCursorVisible)
     return;
   char rowNumber = currentCursor.row;
   char columnNumber = currentCursor.column;
+  Serial.print(rowNumber);
+  Serial.print(", ");
+  Serial.println(columnNumber);
   Player enemy = players[(currentPlayer + 1) % 2];
   bool isAHit = enemy.beingAttacked(rowNumber, columnNumber);
   if (isAHit)
   {
+    Serial.println("Main:enter;rowNumber, isAHit = ");
+    Serial.println(isAHit);
     //There is a hit
     makeHitAnimation(currentPlayer, rowNumber, columnNumber);
     players[currentPlayer].hasJustAttacked(rowNumber, columnNumber, true);
@@ -693,13 +769,17 @@ void enter()
 
 void changeCurrentPlayer(char newPlayerNumber)
 {
+  Serial.println("Main:changeCurrentPlayer; currentPlayerNumber =");
+  Serial.println(newPlayerNumber);
   currentPlayer = newPlayerNumber;
   currentCursor = players[currentPlayer].cursor;
   currentActiveMatrix = players[currentPlayer].getCurrentPage();
+  isCursorVisible = isCursorActiveOnPage(players[currentPlayer].currentPageNumber);
 }
 
 void makeHitAnimation(char deviceId, char rowNumber, char columnNumber)
 {
+  Serial.println("Main:makeHitAnimation;");
   bool value = true;
   char i;
   for (i = 0; i < 9; i++)
@@ -711,7 +791,8 @@ void makeHitAnimation(char deviceId, char rowNumber, char columnNumber)
 }
 void buttonPressed(char pressedBttn)
 {
-  int pressedButton = (int)pressedBttn;
+  Serial.println("Main:buttonPressed;");
+  char pressedButton = pressedBttn;
   switch (pressedButton)
   {
   case moveCursorLeftAction:
