@@ -69,7 +69,6 @@ void setup()
   lc.setLed(1, 0, 0, true);
 }
 
-boolean foundCol = false;
 int keyValue = 0;
 int noKey = 0;
 boolean readKey = false;
@@ -107,35 +106,35 @@ void loop()
     Serial.println(keyValue); // used for debug
     if (keyValue == 1 && y < 7)
     {
-        lc.setLed(0, x, y, false);
-        lc.setLed(1, x, y, false);
-        y++;
-        lc.setLed(0, x, y, true);
-        lc.setLed(1, x, y, true);
+      lc.setLed(0, x, y, false);
+      lc.setLed(1, x, y, false);
+      y++;
+      lc.setLed(0, x, y, true);
+      lc.setLed(1, x, y, true);
     }
     else if (keyValue == 2 && x < 7)
     {
-        lc.setLed(0, x, y, false);
-        lc.setLed(1, x, y, false);
-        x++;
-        lc.setLed(0, x, y, true);
-        lc.setLed(1, x, y, true);
+      lc.setLed(0, x, y, false);
+      lc.setLed(1, x, y, false);
+      x++;
+      lc.setLed(0, x, y, true);
+      lc.setLed(1, x, y, true);
     }
     else if (keyValue == 3 && y > 0)
     {
-        lc.setLed(0, x, y, false);
-        lc.setLed(1, x, y, false);
-        y--;
-        lc.setLed(0, x, y, true);
-        lc.setLed(1, x, y, true);
+      lc.setLed(0, x, y, false);
+      lc.setLed(1, x, y, false);
+      y--;
+      lc.setLed(0, x, y, true);
+      lc.setLed(1, x, y, true);
     }
     else if (keyValue == 6 && x > 0)
     {
-        lc.setLed(0, x, y, false);
-        lc.setLed(1, x, y, false);
-        x--;
-        lc.setLed(0, x, y, true);
-        lc.setLed(1, x, y, true);
+      lc.setLed(0, x, y, false);
+      lc.setLed(1, x, y, false);
+      x--;
+      lc.setLed(0, x, y, true);
+      lc.setLed(1, x, y, true);
     }
     //*******************************************************
     readKey = false; // rest the flag
@@ -154,14 +153,7 @@ void scanRow(int rowNumber)
 
 bool readColumn(int columnNumber)
 {
-  int response = digitalRead(columnNumber);;
-  if (response == 0)
-  {
-    foundCol = true;
-  }
-  else
-  {
-    foundCol = false;
-  }
-  return foundCol;
+  //digitalRead returns 0 when button was pressed
+  int foundColumn = digitalRead(columnNumber) ? false : true;
+  return foundColumn;
 }
