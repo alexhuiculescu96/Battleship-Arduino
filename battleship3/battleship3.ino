@@ -10,7 +10,6 @@
  * 
  * 
  **/
-//#define byte char
 #include <LedControl.h>
 LedControl lc = LedControl(12, 10, 11, 2);
 
@@ -27,6 +26,8 @@ void displayPlayerShots(byte playerNumber);
 void displayPlayerHits(byte playerNumber);
 void displayOpponentShots(byte playerNumber);
 void displayMatrix(byte deviceId, byte mask);
+void doEndGameAnimation();
+void doAttack();
 
 enum action
 {
@@ -62,6 +63,7 @@ byte currentPageNumber[2]; // current page number for both players
 byte cursorCount = -1;
 bool pageHasChanged;
 bool playerHasChanged;
+byte endgame = 0;
 
 void generateShipsForPlayer(byte mask)
 {
@@ -200,8 +202,35 @@ void displayViews() {
   displayView(0);
 }
 
+void doEndGameAnimation() {
+  static byte alreadyDone;
+  if(alreadyDone) return;
+  alreadyDone = 1;
+  Serial.print("doEndGameAnimation;");
+  byte loserPlayer = endgame - 1;
+  byte winner = (loserPlayer + 1) % 2;
+  lc.clearDisplay(loserPlayer);
+  lc.setRow(loserPlayer, 3, B11111111);
+  lc.setRow(loserPlayer, 4, B11111111);
+  lc.setColumn(loserPlayer, 3, B11111111);
+  lc.setColumn(loserPlayer, 4, B11111111);
+  lc.clearDisplay((loserPlayer+1)%2);
+  lc.setRow((loserPlayer+1)%2,0,B11111111);
+  lc.setRow((loserPlayer+1)%2,1,B11111111);
+  lc.setRow((loserPlayer+1)%2,6,B11111111);
+  lc.setRow((loserPlayer+1)%2,7,B11111111);
+  lc.setColumn((loserPlayer+1)%2, 0, B11111111);
+  lc.setColumn((loserPlayer+1)%2, 1, B11111111);
+  lc.setColumn((loserPlayer+1)%2, 6, B11111111);
+  lc.setColumn((loserPlayer+1)%2, 7, B11111111);
+}
+
 void loop() {
   delay(10);
+  if(endgame) {
+    doEndGameAnimation();
+    return;
+  }
   listen();
   if(buttonPressed) {
     buttonHasBeenPressed();
@@ -214,11 +243,33 @@ void loop() {
   pageHasChanged = false;
 }
 
+void doAttack() {
+  //do attack only on player's shots page
+  if(currentPageNumber[currentPlayer] != 1 || !cursorIsVisible) 
+    return;
+  Serial.println("\ndoAttack");
+  byte enemyPlayer = (currentPlayer + 1) % 2;
+  byte playerShotsMask = 4<<currentPlayer;
+  byte enemyShipsMask = 1<< enemyPlayer;
+  if(matrix[cursorX][cursorY] & playerShotsMask) {
+    Serial.println("\n !!! Player already attacked at this position");
+    return;
+  }
+  matrix[cursorX][cursorY] = matrix[cursorX][cursorY] | playerShotsMask; // save the attack in the matrix
+  if(matrix[cursorX][cursorY] & enemyShipsMask) {
+  Serial.println("It's a HIT");
+    //if the attack is a hit
+  } else {
+  Serial.println("It's a MISS");
+    //the attack is a miss
+  }
+}
+
 void buttonHasBeenPressed() {
   Serial.print("\nbuttonHasBeenPressed: buttonValue = ");
   Serial.println(pressedButtonValue);
   if (pressedButtonValue == enterAction) {
-    //TODO
+    doAttack();
   } else if (pressedButtonValue == moveCursorLeftAction) {
     cursorHasMoved = true;
     cursorX = cursorX == 0 ? 7 : cursorX - 1;
@@ -238,7 +289,9 @@ void buttonHasBeenPressed() {
     pageHasChanged = true;
     currentPageNumber[currentPlayer] = (currentPageNumber[currentPlayer] + 1) % 4; // 4 = number of pages
   } else if (pressedButtonValue == retreatAction) {
-    //TODO
+    endgame = 1 + currentPlayer;
+    cursorCount = 0;
+    cursorIsVisible = false;
   }
 }
 
@@ -249,19 +302,16 @@ void displayCursor() {
   //Set led to ON only when count == 0, to avoid unnecessary calls
   if(cursorCount == 0) {
     lc.setLed(currentPlayer,cursorX,cursorY,true);
-    Serial.println("displayCursor: set cursor on");
     return;
   } 
   //Set led to OFF only when count == 50, to avoid unnecessary calls
   if (cursorCount == 20) {
     lc.setLed(currentPlayer, cursorX, cursorY, false);
-    Serial.println("displayCursor: set cursor off");
     return;
   }
   //When count > max, reset the counter
   if(cursorCount > 40 ) {
     cursorCount = -1;
-    Serial.println("displayCursor: reset the counter");
     return;
   }
   //IF cursor has moved, display the cursor in it's new position with it's current value
