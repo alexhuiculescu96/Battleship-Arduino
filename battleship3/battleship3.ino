@@ -61,39 +61,70 @@ bool buttonPressed = false;
 byte currentPageNumber[2]; // current page number for both players
 byte cursorCount = -1;
 bool pageHasChanged;
+bool playerHasChanged;
 
 void generateShipsForPlayer(byte mask)
 {
   byte ships[] = {4, 3, 3, 2, 2};
-  Serial.println("generateShips");
+  Serial.print("\ngenerateShipsForPlayer: mask = ");
+  Serial.println(mask);
   byte x = 0, y = 0, flag, j, orientation;
   for (byte i = 0; i < 5; i++)
   {
+    Serial.print("ship number = ");
+    Serial.print(i);
     flag = 0;
     orientation = random() % 2;
+    Serial.print("; orientation = ");
+    Serial.println(orientation);
     if (orientation)
     {
       while (!flag)
       {
+        Serial.print("Starting while; flag is not set. Orientation is vertical");
         x = random() % (8 - ships[i]);
         y = random() % 8;
+        Serial.print("*(x,y) = (");
+        Serial.print(x);
+        Serial.print(',');
+        Serial.print(y);
+        Serial.println(")");
         if (matrix[x][y] & mask)
-          /* (x,y) position for player already taken */
-          continue;
+          { 
+            Serial.print("*Position already taken");
+            /* (x,y) position for player already taken */
+            continue;
+          }
         else
         {
+          Serial.println("*Position is not taken; filling the collumn");
           /* fill the column*/
           char temp = x;
           flag = 1;
           for (j = 0; j < ships[i]; j++, temp++)
           {
             if (matrix[temp][y] & mask)
-              flag = 0;
+              {
+                Serial.println("**found a match at ");
+                Serial.print(temp);
+                Serial.print(",");
+                Serial.println(y);
+                flag = 0;
+              }
           }
           if (!flag)
-            continue;
+            {
+              Serial.println("*could not fill the collumn");
+              continue;
+            }
           for (j = 0; j < ships[i]; j++, x++)
-            matrix[x][y] = matrix[x][y] | mask; //add 1 on first bit(MSB)
+            {
+              Serial.println("\n set on the following position: x = ");
+              Serial.print(x);
+              Serial.print("; y = ");
+              Serial.println(y);
+              matrix[x][y] = matrix[x][y] | mask; //add 1 on the corresponding bit
+            }
         }
       }
     }
@@ -101,29 +132,73 @@ void generateShipsForPlayer(byte mask)
     {
       while (!flag)
       {
+        Serial.print("Starting while; flag is not set. Orientation is horizontal");
         x = random() % 8;
         y = random() % (8 - ships[i]);
+        Serial.print("*(x,y) = (");
+        Serial.print(x);
+        Serial.print(',');
+        Serial.print(y);
+        Serial.println(")");
         if (matrix[x][y] & mask)
-          /* (x,y) position for player already taken */
-          continue;
+            {
+              Serial.print("*Position already taken");
+              /* (x,y) position for player already taken */
+              continue;
+            }
         else
         {
+          Serial.println("*Position is not taken; filling the row");
           /* fill the row*/
           char temp = y;
           flag = 1;
           for (j = 0; j < ships[i]; j++, temp++)
           {
             if (matrix[x][temp] & mask)
-              flag = 0;
+              {
+                Serial.println("**found a match at ");
+                Serial.print(temp);
+                Serial.print(",");
+                Serial.println(y);
+                flag = 0;
+              }
           }
           if (!flag)
-            continue;
+            {
+              Serial.println("*could not fill the collumn");
+              continue;
+            }
           for (j = 0; j < ships[i]; j++, y++)
-            matrix[x][y] = matrix[x][y];
+            {
+              Serial.println("\n set on the following position: x = ");
+              Serial.print(x);
+              Serial.print("; y = ");
+              Serial.println(y);
+              matrix[x][y] = matrix[x][y] | mask;
+            }
         }
       }
     }
   }
+  byte i;
+  Serial.println("\tMatrix = ");
+  for(i = 0; i < 8 ; i ++) {
+    Serial.println("");
+    for(j = 0; j < 8; j++) {
+      if(matrix[i][j] & mask)
+        {
+          Serial.print("1-");
+          Serial.print(matrix[i][j]);
+          Serial.print(" ");
+        }
+      else {
+          Serial.print("0-");
+          Serial.print(matrix[i][j]);
+          Serial.print(" ");
+      }
+    }
+  }
+  Serial.println("");
 }
 
 void generateShips()
@@ -160,7 +235,7 @@ void setup()
   startGame(-1);
 }
 void displayViews() {
-  if(!pageHasChanged && !cursorHasMoved) 
+  if(!pageHasChanged && !cursorHasMoved && !playerHasChanged) 
     return;
   //Display view for player 0
   displayView(0);
@@ -169,7 +244,7 @@ void displayViews() {
 }
 
 void loop() {
-  delay(300);
+  delay(100);
   listen();
   if(buttonPressed) {
     buttonHasBeenPressed();
@@ -182,6 +257,8 @@ void loop() {
 }
 
 void buttonHasBeenPressed() {
+  Serial.print("\nbuttonHasBeenPressed: buttonValue = ");
+  Serial.println(pressedButtonValue);
   if (pressedButtonValue == enterAction) {
     //TODO
   } else if (pressedButtonValue == moveCursorLeftAction) {
@@ -214,20 +291,24 @@ void displayCursor() {
   //Set led to ON only when count == 0, to avoid unnecessary calls
   if(cursorCount == 0) {
     lc.setLed(currentPlayer,cursorX,cursorY,true);
+    Serial.println("displayCursor: set cursor on");
     return;
   } 
   //Set led to OFF only when count == 50, to avoid unnecessary calls
   if (cursorCount == 50) {
     lc.setLed(currentPlayer, cursorX, cursorY, false);
+    Serial.println("displayCursor: set cursor off");
     return;
   }
   //When count > 99, reset the counter
   if(cursorCount > 99 ) {
     cursorCount = 0;
+    Serial.println("displayCursor: reset the counter");
     return;
   }
   //IF cursor has moved, display the cursor in it's new position with it's current value
   if(cursorHasMoved) {
+    Serial.println("displayCursor: cursorHasMoved");
     if(cursorCount < 50) {
       lc.setLed(currentPlayer,cursorX,cursorY,true);
     } else {
@@ -239,6 +320,21 @@ void displayCursor() {
 //playerNumber = 0 or 1
 void displayView(byte playerNumber) {
   byte pageNumber = currentPageNumber[playerNumber];
+  byte willDisplay = 0;
+  if(!playerHasChanged && !cursorHasMoved && !pageHasChanged)
+    willDisplay = 0;
+  if(playerHasChanged) {
+    willDisplay = 1;
+  } else if(cursorHasMoved && pageHasChanged) {
+    willDisplay = (currentPlayer == playerNumber);
+  }
+  if(!willDisplay)
+    return;
+    Serial.println("displayView: playerNumber = ");
+    Serial.print(playerNumber);
+    Serial.print("; pageNumber = ");
+    Serial.print(pageNumber);
+  
   if (pageNumber == 0) {
     displayShips(playerNumber);
   } else if (pageNumber == 1) {
@@ -251,25 +347,36 @@ void displayView(byte playerNumber) {
 }
 
 void displayShips(byte playerNumber) {
-  Serial.println("displayShips");
   
   byte mask = 1 << playerNumber;
+  Serial.println("displayShips; playerNumber = ");
+  Serial.print(playerNumber);
+  Serial.print("; mask = ");
+  Serial.print(mask);
   displayMatrix(playerNumber, mask);
 }
 
 void displayPlayerShots(byte playerNumber) {
-  Serial.println("displayPlayerShots");
 
   byte mask = 4 << playerNumber;
+  Serial.println("displayPlayerShots; playerNumber = ");
+  Serial.print(playerNumber);
+  Serial.print("; player shots mask = ");
+  Serial.print(mask);
   displayMatrix(playerNumber, mask);
 }
 
 void displayPlayerHits(byte playerNumber) {
-  Serial.println("displayPlayerHits");
   
   byte i, j, playerShotsMask, opponentShipsMask;
   playerShotsMask = 4 << playerNumber;
   opponentShipsMask = 1 << ((1 + playerNumber) % 2);
+  Serial.println("displayPlayerHits; playerNumber = ");
+  Serial.print(playerNumber);
+  Serial.print("; player shots mask = ");
+  Serial.print(playerShotsMask);
+  Serial.print("; opponentShipMask = ");
+  Serial.print(opponentShipsMask);
   for (i = 0; i < 8; i++)
   {
     for (j = 0; j < 8; j++)
@@ -284,25 +391,38 @@ void displayPlayerHits(byte playerNumber) {
 }
 
 void displayOpponentShots(byte playerNumber) {
-  Serial.println("displayOpponentShots");
 
   byte opponentPlayer = (currentPlayer + 1) % 2;
   byte opponentMask = 4 << opponentPlayer;
+  Serial.println("displayOpponentShots; playerNumber = ");
+  Serial.print(playerNumber);
+  Serial.print("; opponentMask = ");
+  Serial.print(opponentMask);
   displayMatrix(playerNumber, opponentMask);
 }
 
 void displayMatrix(byte deviceId, byte mask) {
-  Serial.println("displayMatrix");
+  Serial.println("displayMatrix: deviceId = ");
+  Serial.print(deviceId);
+  Serial.print("; mask = ");
+  Serial.print("mask; \n*Matrix = ");
   
   byte i, j;
   for (i = 0; i < 8; i++)
   {
+      Serial.println("");
     for (j = 0; j < 8; j++)
     {
       if (matrix[i][j] & mask)
-        setLed(deviceId, i, j, true);
+        {
+          setLed(deviceId, i, j, true);
+          Serial.print("1 ");
+        }
       else
-        setLed(deviceId, i, j, false);
+        {
+          setLed(deviceId, i, j, false);
+          Serial.print("0 ");
+        }
     }
   }
 }
@@ -318,6 +438,7 @@ void setLed(byte deviceId, byte row, byte column, bool value) {
 
 void startGame(byte firstPlayer)
 {
+  Serial.println("START game");
   if(firstPlayer == 1 ) currentPlayer = 1;
   else currentPlayer == 0;
   currentPageNumber[0] = 0;
@@ -328,7 +449,6 @@ void startGame(byte firstPlayer)
 }
 void listen()
 {
-  Serial.println("ButtonListener:listen; ");
   if (noKey == 16)
   {                 // no keys were pressed
     readKey = true; // keyboard is ready to accept a new keypress
@@ -354,8 +474,6 @@ void listen()
   if (readKey == true && noKey == 15)
   {
     // a key has been pressed
-    Serial.println("ButtonListener:listen; a button has been pressed:");
-    Serial.println(pressedButtonValue);
     buttonPressed = true;
     readKey = false; // reset the flag
   }
@@ -377,8 +495,6 @@ void setupListener()
 
 bool readColumn(char columnNumber)
 {
-  Serial.println("ButtonListener:readColumn; columnNumber = ");
-  Serial.println(columnNumber);
   //digitalRead returns 0 when button was pressed
   char foundColumn = digitalRead(columnNumber) ? false : true;
   return foundColumn;
@@ -386,8 +502,6 @@ bool readColumn(char columnNumber)
 
 void scanRow(char rowNumber)
 {
-  Serial.println("ButtonListener:scanRow; rowNumber = ");
-  Serial.println(rowNumber);
   for (char j = row1; j < (row4 + 1); j++)
   {
     digitalWrite(j, HIGH);
