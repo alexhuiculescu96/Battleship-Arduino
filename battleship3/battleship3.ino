@@ -64,6 +64,7 @@ byte cursorCount = -1;
 bool pageHasChanged;
 bool playerHasChanged;
 byte endgame = 0;
+byte playerHits[2];
 
 void generateShipsForPlayer(byte mask)
 {
@@ -260,6 +261,9 @@ void doAttack() {
   if(matrix[cursorX][cursorY] & enemyShipsMask) {
   Serial.println("It's a HIT");
     //if the attack is a hit
+    playerHits[currentPlayer]++;
+    if(playerHits[currentPlayer] == 14) 
+      endgame = enemyPlayer+1; //if the player has 14 hits, the enemy has lost the game
   } else {
   Serial.println("It's a MISS");
     //the attack is a miss
