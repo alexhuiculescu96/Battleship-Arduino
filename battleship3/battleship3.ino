@@ -201,13 +201,14 @@ void displayViews() {
 }
 
 void loop() {
-  delay(100);
+  delay(10);
   listen();
   if(buttonPressed) {
     buttonHasBeenPressed();
   }
-  displayCursor();
+  //First display view, after that display cursor
   displayViews();
+  displayCursor();
   cursorHasMoved = false;
   buttonPressed = false;
   pageHasChanged = false;
@@ -220,10 +221,10 @@ void buttonHasBeenPressed() {
     //TODO
   } else if (pressedButtonValue == moveCursorLeftAction) {
     cursorHasMoved = true;
-    cursorX = cursorX ? 7 : cursorX - 1;
+    cursorX = cursorX == 0 ? 7 : cursorX - 1;
   } else if (pressedButtonValue == moveCursorDownAction) {
     cursorHasMoved = true;
-    cursorY = cursorY ? 7 : cursorY - 1;
+    cursorY = cursorY == 0 ? 7 : cursorY - 1;
   } else if (pressedButtonValue == moveCursorRightAction) {
     cursorHasMoved = true;
     cursorX = (cursorX + 1) % 8;
@@ -252,14 +253,14 @@ void displayCursor() {
     return;
   } 
   //Set led to OFF only when count == 50, to avoid unnecessary calls
-  if (cursorCount == 50) {
+  if (cursorCount == 20) {
     lc.setLed(currentPlayer, cursorX, cursorY, false);
     Serial.println("displayCursor: set cursor off");
     return;
   }
-  //When count > 99, reset the counter
-  if(cursorCount > 99 ) {
-    cursorCount = 0;
+  //When count > max, reset the counter
+  if(cursorCount > 40 ) {
+    cursorCount = -1;
     Serial.println("displayCursor: reset the counter");
     return;
   }
@@ -410,7 +411,7 @@ void startGame(byte firstPlayer)
   currentPageNumber[0] = 0;
   currentPageNumber[1] = 0;
   generateShips();
-  cursorIsVisible = false;
+  cursorIsVisible = true;
   pageHasChanged = true;
 }
 void listen()
