@@ -173,9 +173,8 @@ void generateShips()
 }
 void setup()
 {
-  Serial.println("Main:setup");
   Serial.begin(9600);
-  randomSeed(analogRead(0));
+  setupListener();
   /*
    The MAX72XX is in power-saving mode on startup,
    we have to do a wakeup call
@@ -188,16 +187,17 @@ void setup()
   /* and clear the display */
   lc.clearDisplay(0);
   lc.clearDisplay(1);
-  setupListener();
+  randomSeed(analogRead(0));
   startGame(-1);
 }
 void displayViews() {
   if(!pageHasChanged && !cursorHasMoved && !playerHasChanged) 
     return;
-  //Display view for player 0
-  displayView(0);
+  Serial.println("\ndisplayViews: displaying the views");
   //Display view for player 1
   displayView(1);
+  //Display view for player 0
+  displayView(0);
 }
 
 void loop() {
@@ -278,20 +278,16 @@ void displayCursor() {
 void displayView(byte playerNumber) {
   byte pageNumber = currentPageNumber[playerNumber];
   byte willDisplay = 0;
-  if(!playerHasChanged && !cursorHasMoved && !pageHasChanged)
-    willDisplay = 0;
-  if(playerHasChanged) {
-    willDisplay = 1;
-  } else if(cursorHasMoved && pageHasChanged) {
-    willDisplay = (currentPlayer == playerNumber);
-  }
-  if(!willDisplay)
-    return;
-    Serial.println("displayView: playerNumber = ");
-    Serial.print(playerNumber);
-    Serial.print("; pageNumber = ");
-    Serial.print(pageNumber);
-  
+  Serial.print("\n\tdisplayView: pageNumber = ");
+  Serial.print(pageNumber);
+  Serial.print(";\n\tplayerNumber = ");
+  Serial.print(playerNumber);
+  Serial.print("\n\tplayerHasChanged = ");
+  Serial.print(playerHasChanged);
+  Serial.print("\n\tcursorHasMoved = ");
+  Serial.print(cursorHasMoved);
+  Serial.print("\n\tpageHasChanged = ");
+  Serial.print(pageHasChanged);
   if (pageNumber == 0) {
     displayShips(playerNumber);
   } else if (pageNumber == 1) {
@@ -306,7 +302,7 @@ void displayView(byte playerNumber) {
 void displayShips(byte playerNumber) {
   
   byte mask = 1 << playerNumber;
-  Serial.println("displayShips; playerNumber = ");
+  Serial.print("\ndisplayShips; playerNumber = ");
   Serial.print(playerNumber);
   Serial.print("; mask = ");
   Serial.print(mask);
@@ -316,7 +312,7 @@ void displayShips(byte playerNumber) {
 void displayPlayerShots(byte playerNumber) {
 
   byte mask = 4 << playerNumber;
-  Serial.println("displayPlayerShots; playerNumber = ");
+  Serial.print("\ndisplayPlayerShots; playerNumber = ");
   Serial.print(playerNumber);
   Serial.print("; player shots mask = ");
   Serial.print(mask);
@@ -328,7 +324,7 @@ void displayPlayerHits(byte playerNumber) {
   byte i, j, playerShotsMask, opponentShipsMask;
   playerShotsMask = 4 << playerNumber;
   opponentShipsMask = 1 << ((1 + playerNumber) % 2);
-  Serial.println("displayPlayerHits; playerNumber = ");
+  Serial.print("\ndisplayPlayerHits; playerNumber = ");
   Serial.print(playerNumber);
   Serial.print("; player shots mask = ");
   Serial.print(playerShotsMask);
@@ -351,7 +347,7 @@ void displayOpponentShots(byte playerNumber) {
 
   byte opponentPlayer = (currentPlayer + 1) % 2;
   byte opponentMask = 4 << opponentPlayer;
-  Serial.println("displayOpponentShots; playerNumber = ");
+  Serial.print("\ndisplayOpponentShots; playerNumber = ");
   Serial.print(playerNumber);
   Serial.print("; opponentMask = ");
   Serial.print(opponentMask);
@@ -359,10 +355,11 @@ void displayOpponentShots(byte playerNumber) {
 }
 
 void displayMatrix(byte deviceId, byte mask) {
-  Serial.println("displayMatrix: deviceId = ");
+  Serial.print("\ndisplayMatrix: deviceId = ");
   Serial.print(deviceId);
   Serial.print("; mask = ");
-  Serial.print("mask; \n*Matrix = ");
+  Serial.print(mask);
+  Serial.print("; \n*Matrix = ");
   
   byte i, j;
   for (i = 0; i < 8; i++)
@@ -439,7 +436,6 @@ void listen()
 
 void setupListener()
 {
-  Serial.println("ButtonListener:setup");
   pinMode(row1, OUTPUT);
   pinMode(row2, OUTPUT);
   pinMode(row3, OUTPUT);
