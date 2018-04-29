@@ -232,7 +232,7 @@ void buttonHasBeenPressed() {
     cursorY = (cursorY + 1) % 8;
   } else if (pressedButtonValue == switchPageLeftAction) {
     pageHasChanged = true;
-    currentPageNumber[currentPlayer] = currentPageNumber[currentPlayer] ? 3 : currentPageNumber[currentPlayer] - 1;
+    currentPageNumber[currentPlayer] = currentPageNumber[currentPlayer] == 0 ? 3 : currentPageNumber[currentPlayer] - 1;
   } else if (pressedButtonValue == switchPageRightAction) {
     pageHasChanged = true;
     currentPageNumber[currentPlayer] = (currentPageNumber[currentPlayer] + 1) % 4; // 4 = number of pages
@@ -329,16 +329,28 @@ void displayPlayerHits(byte playerNumber) {
   Serial.print("; player shots mask = ");
   Serial.print(playerShotsMask);
   Serial.print("; opponentShipMask = ");
-  Serial.print(opponentShipsMask);
+  Serial.println(opponentShipsMask);
+  Serial.println("*Mask");
   for (i = 0; i < 8; i++)
   {
+    Serial.println("");
     for (j = 0; j < 8; j++)
     {
       //If player shot (i,j) position and oponent has a ship on that position
       if ((matrix[i][j] & playerShotsMask) && (matrix[i][j] & opponentShipsMask))
-        setLed(playerNumber, i, j, true);
+        {
+          Serial.print("1-");
+          Serial.print(matrix[i][j]);
+          Serial.print(' ');
+          setLed(playerNumber, i, j, true);
+        }
       else
-        setLed(playerNumber, i, j, false);
+        {
+          Serial.print("1-");
+          Serial.print(matrix[i][j]);
+          Serial.print(' ');
+          setLed(playerNumber, i, j, false);
+        }
     }
   }
 }
