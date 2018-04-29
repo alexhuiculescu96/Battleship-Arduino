@@ -241,6 +241,7 @@ void loop() {
   cursorHasMoved = false;
   buttonPressed = false;
   pageHasChanged = false;
+  playerHasChanged = false;
 }
 
 void doAttack() {
@@ -262,6 +263,8 @@ void doAttack() {
   } else {
   Serial.println("It's a MISS");
     //the attack is a miss
+    currentPlayer = enemyPlayer;
+    playerHasChanged = true;
   }
 }
 
