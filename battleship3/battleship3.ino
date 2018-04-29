@@ -71,33 +71,21 @@ void generateShipsForPlayer(byte mask)
   byte x = 0, y = 0, flag, j, orientation;
   for (byte i = 0; i < 5; i++)
   {
-    Serial.print("ship number = ");
-    Serial.print(i);
     flag = 0;
     orientation = random() % 2;
-    Serial.print("; orientation = ");
-    Serial.println(orientation);
     if (orientation)
     {
       while (!flag)
       {
-        Serial.print("Starting while; flag is not set. Orientation is vertical");
         x = random() % (8 - ships[i]);
         y = random() % 8;
-        Serial.print("*(x,y) = (");
-        Serial.print(x);
-        Serial.print(',');
-        Serial.print(y);
-        Serial.println(")");
         if (matrix[x][y] & mask)
           { 
-            Serial.print("*Position already taken");
             /* (x,y) position for player already taken */
             continue;
           }
         else
         {
-          Serial.println("*Position is not taken; filling the collumn");
           /* fill the column*/
           char temp = x;
           flag = 1;
@@ -105,24 +93,15 @@ void generateShipsForPlayer(byte mask)
           {
             if (matrix[temp][y] & mask)
               {
-                Serial.println("**found a match at ");
-                Serial.print(temp);
-                Serial.print(",");
-                Serial.println(y);
                 flag = 0;
               }
           }
           if (!flag)
             {
-              Serial.println("*could not fill the collumn");
               continue;
             }
           for (j = 0; j < ships[i]; j++, x++)
             {
-              Serial.println("\n set on the following position: x = ");
-              Serial.print(x);
-              Serial.print("; y = ");
-              Serial.println(y);
               matrix[x][y] = matrix[x][y] | mask; //add 1 on the corresponding bit
             }
         }
@@ -132,14 +111,8 @@ void generateShipsForPlayer(byte mask)
     {
       while (!flag)
       {
-        Serial.print("Starting while; flag is not set. Orientation is horizontal");
         x = random() % 8;
         y = random() % (8 - ships[i]);
-        Serial.print("*(x,y) = (");
-        Serial.print(x);
-        Serial.print(',');
-        Serial.print(y);
-        Serial.println(")");
         if (matrix[x][y] & mask)
             {
               Serial.print("*Position already taken");
@@ -148,7 +121,6 @@ void generateShipsForPlayer(byte mask)
             }
         else
         {
-          Serial.println("*Position is not taken; filling the row");
           /* fill the row*/
           char temp = y;
           flag = 1;
@@ -156,24 +128,15 @@ void generateShipsForPlayer(byte mask)
           {
             if (matrix[x][temp] & mask)
               {
-                Serial.println("**found a match at ");
-                Serial.print(temp);
-                Serial.print(",");
-                Serial.println(y);
                 flag = 0;
               }
           }
           if (!flag)
             {
-              Serial.println("*could not fill the collumn");
               continue;
             }
           for (j = 0; j < ships[i]; j++, y++)
             {
-              Serial.println("\n set on the following position: x = ");
-              Serial.print(x);
-              Serial.print("; y = ");
-              Serial.println(y);
               matrix[x][y] = matrix[x][y] | mask;
             }
         }
@@ -208,16 +171,10 @@ void generateShips()
   //mask = 2 for the second player
   generateShipsForPlayer(2);
 }
-#define arduino true
 void setup()
 {
   Serial.println("Main:setup");
-  //ON ARDUINO: change "::" with '.'
-  #if arduino
   Serial.begin(9600);
-  #else
-  Serial::begin(9600);
-  #endif
   randomSeed(analogRead(0));
   /*
    The MAX72XX is in power-saving mode on startup,
