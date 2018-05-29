@@ -13,20 +13,38 @@
 #include <LedControl.h>
 LedControl lc = LedControl(12, 10, 11, 2);
 
+//Method to generate ships for a single
 void generateShipsForPlayer(byte mask);
+//Method to generate ships at the start of the game
 void generateShips();
+//Method to start game
 void startGame();
+//Listen to key events
 void listen();
+//Setup the key event listener
 void setupListener();
+//Reads a column, return true if a button on that collons has been pressed
+//Otherwise, returns false
 bool readColumn(char columnNumber);
+//Check enable one row to be checked for button presses
 void scanRow(char rowNumber);
+//Displays the matrix corresponding to <playerNumber/> on it's display
 void displayView(byte playerNumber);
+//Renders the ships for <playerNumber/> on it's display
 void displayShips(byte playerNumber);
+//Display the shots corresponding to <playerNumber/>
 void displayPlayerShots(byte playerNumber);
+//Display the hits corresponding to <playerNumber/>
 void displayPlayerHits(byte playerNumber);
+//Display  <playerNumber/> 's opponent shots
 void displayOpponentShots(byte playerNumber);
+//Generally displaying a view on a device
+//Mask is used to retreive the wanted data from matrix
+//For example: ships(P1 or P2), hits(P1 or P2),player shots, enemy shots
 void displayMatrix(byte deviceId, byte mask);
+//Does an animation: square for winner and cross for loser
 void doEndGameAnimation();
+//Called when an attack is initiated
 void doAttack();
 
 enum action
@@ -49,13 +67,19 @@ static const char colB = 7;
 static const char colC = 8;
 static const char colD = 9;
 
+//Holds the data
 byte matrix[8][8];
+//Cursor position
 byte cursorX;
 byte cursorY;
+//Cursor is visible only on some pages, depending on this field
 byte cursorIsVisible;
+//If cursor has moved, we will rerender the displays
 bool cursorHasMoved;
 byte currentPlayer;
+//Holds the value of the button: 0-15
 byte pressedButtonValue = -1;
+//Used to check if any button has been pressed
 byte noKey = 0;
 bool readKey = false;
 bool buttonPressed = false;
@@ -68,18 +92,21 @@ byte playerHits[2];
 
 void generateShipsForPlayer(byte mask)
 {
+  //Ships dimmensions
   byte ships[] = {4, 3, 3, 2, 2};
   Serial.print("\ngenerateShipsForPlayer: mask = ");
   Serial.println(mask);
   byte x = 0, y = 0, flag, j, orientation;
+  //Iterate for each ship
   for (byte i = 0; i < 5; i++)
   {
     flag = 0;
-    orientation = random() % 2;
+    orientation = random() % 2; // 1 for horizontal, 0 for vertical
     if (orientation)
     {
       while (!flag)
       {
+        //Start position for the ship
         x = random() % (8 - ships[i]);
         y = random() % 8;
         if (matrix[x][y] & mask)
@@ -96,6 +123,7 @@ void generateShipsForPlayer(byte mask)
           {
             if (matrix[temp][y] & mask)
               {
+                //position is taken
                 flag = 0;
               }
           }
@@ -147,7 +175,7 @@ void generateShipsForPlayer(byte mask)
     }
   }
   byte i;
-  Serial.println("\tMatrix = ");
+  Serial.println("\tMatrix = "); //Print the matrix on serial
   for(i = 0; i < 8 ; i ++) {
     Serial.println("");
     for(j = 0; j < 8; j++) {
@@ -191,6 +219,7 @@ void setup()
   lc.clearDisplay(0);
   lc.clearDisplay(1);
   randomSeed(analogRead(0));
+  //Start the game with no default first player
   startGame(-1);
 }
 void displayViews() {
@@ -204,7 +233,7 @@ void displayViews() {
 }
 
 void doEndGameAnimation() {
-  static byte alreadyDone;
+  static byte alreadyDone; //we wil display the animation only once. No unnecesarry calls will be made
   if(alreadyDone) return;
   alreadyDone = 1;
   Serial.print("doEndGameAnimation;");
@@ -229,16 +258,19 @@ void doEndGameAnimation() {
 void loop() {
   delay(10);
   if(endgame) {
+    //Check if the game has ended
     doEndGameAnimation();
     return;
   }
-  listen();
+  listen(); //Check for button presses
   if(buttonPressed) {
-    buttonHasBeenPressed();
+    buttonHasBeenPressed(); //Callback for button pressed
   }
   //First display view, after that display cursor
-  displayViews();
+  //Otherwise, the view will override the cursor
+  displayViews(); 
   displayCursor();
+  //Set flags to default
   cursorHasMoved = false;
   buttonPressed = false;
   pageHasChanged = false;
@@ -246,22 +278,22 @@ void loop() {
 }
 
 void doAttack() {
-  //do attack only on player's shots page
+  //do attack only on player's shots page (page 1 if starting at 0)
   if(currentPageNumber[currentPlayer] != 1 || !cursorIsVisible) 
     return;
   Serial.println("\ndoAttack");
-  byte enemyPlayer = (currentPlayer + 1) % 2;
-  byte playerShotsMask = 4<<currentPlayer;
-  byte enemyShipsMask = 1<< enemyPlayer;
+  byte enemyPlayer = (currentPlayer + 1) % 2; //get enemy player number
+  byte playerShotsMask = 4<<currentPlayer; // get player mask for shots
+  byte enemyShipsMask = 1<< enemyPlayer; // get enemy mask for ships
   if(matrix[cursorX][cursorY] & playerShotsMask) {
     Serial.println("\n !!! Player already attacked at this position");
+    //This position has already been attackef
     return;
   }
   matrix[cursorX][cursorY] = matrix[cursorX][cursorY] | playerShotsMask; // save the attack in the matrix
-  if(matrix[cursorX][cursorY] & enemyShipsMask) {
+  if(matrix[cursorX][cursorY] & enemyShipsMask) { //The attack is a hit
   Serial.println("It's a HIT");
-    //if the attack is a hit
-    playerHits[currentPlayer]++;
+    playerHits[currentPlayer]++; //Increment the number of hits
     if(playerHits[currentPlayer] == 14) 
       endgame = enemyPlayer+1; //if the player has 14 hits, the enemy has lost the game
   } else {
@@ -275,28 +307,30 @@ void doAttack() {
 void buttonHasBeenPressed() {
   Serial.print("\nbuttonHasBeenPressed: buttonValue = ");
   Serial.println(pressedButtonValue);
-  if (pressedButtonValue == enterAction) {
+  if (pressedButtonValue == enterAction) {//On enter action, attack
     doAttack();
   } else if (pressedButtonValue == moveCursorLeftAction) {
     cursorHasMoved = true;
-    cursorX = cursorX == 0 ? 7 : cursorX - 1;
+    cursorX = cursorX == 0 ? 7 : cursorX - 1; //compute new cursor position
   } else if (pressedButtonValue == moveCursorDownAction) {
     cursorHasMoved = true;
-    cursorY = cursorY == 0 ? 7 : cursorY - 1;
+    cursorY = cursorY == 0 ? 7 : cursorY - 1;//compute new cursor position
   } else if (pressedButtonValue == moveCursorRightAction) {
     cursorHasMoved = true;
-    cursorX = (cursorX + 1) % 8;
+    cursorX = (cursorX + 1) % 8;//compute new cursor position
   } else if (pressedButtonValue == moveCursorUpAction) {
     cursorHasMoved = true;
-    cursorY = (cursorY + 1) % 8;
+    cursorY = (cursorY + 1) % 8;//compute new cursor position
   } else if (pressedButtonValue == switchPageLeftAction) {
     pageHasChanged = true;
+    //compute new page number
     currentPageNumber[currentPlayer] = currentPageNumber[currentPlayer] == 0 ? 3 : currentPageNumber[currentPlayer] - 1;
   } else if (pressedButtonValue == switchPageRightAction) {
     pageHasChanged = true;
+    //compute new page number
     currentPageNumber[currentPlayer] = (currentPageNumber[currentPlayer] + 1) % 4; // 4 = number of pages
   } else if (pressedButtonValue == retreatAction) {
-    endgame = 1 + currentPlayer;
+    endgame = 1 + currentPlayer; // automatically end the game
     cursorCount = 0;
     cursorIsVisible = false;
   }
@@ -321,12 +355,14 @@ void displayCursor() {
     cursorCount = -1;
     return;
   }
-  //IF cursor has moved, display the cursor in it's new position with it's current value
+  //IF cursor has moved, display the cursor in it's new position with it's current state
   if(cursorHasMoved) {
     Serial.println("displayCursor: cursorHasMoved");
     if(cursorCount < 50) {
+      //Cursor's state was ON, and will remain so
       lc.setLed(currentPlayer,cursorX,cursorY,true);
     } else {
+      //Cursor's state was ON, and will remain so
       lc.setLed(currentPlayer,cursorX,cursorY,false);
     }
 
@@ -364,7 +400,7 @@ void displayShips(byte playerNumber) {
   Serial.print(playerNumber);
   Serial.print("; mask = ");
   Serial.print(mask);
-  displayMatrix(playerNumber, mask);
+  displayMatrix(playerNumber, mask); //call displayMatrix with player's ship mask
 }
 
 void displayPlayerShots(byte playerNumber) {
@@ -374,14 +410,13 @@ void displayPlayerShots(byte playerNumber) {
   Serial.print(playerNumber);
   Serial.print("; player shots mask = ");
   Serial.print(mask);
-  displayMatrix(playerNumber, mask);
+  displayMatrix(playerNumber, mask); //call displayMatrix with player's shots mask
 }
 
 void displayPlayerHits(byte playerNumber) {
-  
   byte i, j, playerShotsMask, opponentShipsMask;
-  playerShotsMask = 4 << playerNumber;
-  opponentShipsMask = 1 << ((1 + playerNumber) % 2);
+  playerShotsMask = 4 << playerNumber; // get player's shots mask
+  opponentShipsMask = 1 << ((1 + playerNumber) % 2); // get opponent's ship mask
   Serial.print("\ndisplayPlayerHits; playerNumber = ");
   Serial.print(playerNumber);
   Serial.print("; player shots mask = ");
@@ -389,14 +424,15 @@ void displayPlayerHits(byte playerNumber) {
   Serial.print("; opponentShipMask = ");
   Serial.println(opponentShipsMask);
   Serial.println("*Mask");
-  for (i = 0; i < 8; i++)
+  for (i = 0; i < 8; i++) //iterate through the matrix
   {
     Serial.println("");
     for (j = 0; j < 8; j++)
     {
       //If player shot (i,j) position and oponent has a ship on that position
-      if ((matrix[i][j] & playerShotsMask) && (matrix[i][j] & opponentShipsMask))
+      if ((matrix[i][j] & playerShotsMask) && (matrix[i][j] & opponentShipsMask)) 
         {
+          //player has a shot on this position and opponent has a ship
           Serial.print("1-");
           Serial.print(matrix[i][j]);
           Serial.print(' ');
@@ -414,14 +450,14 @@ void displayPlayerHits(byte playerNumber) {
 }
 
 void displayOpponentShots(byte playerNumber) {
-
+  //get corresponding masks
   byte opponentPlayer = (currentPlayer + 1) % 2;
   byte opponentMask = 4 << opponentPlayer;
   Serial.print("\ndisplayOpponentShots; playerNumber = ");
   Serial.print(playerNumber);
   Serial.print("; opponentMask = ");
   Serial.print(opponentMask);
-  displayMatrix(playerNumber, opponentMask);
+  displayMatrix(playerNumber, opponentMask); // call displayMatrix with corresponding masks
 }
 
 void displayMatrix(byte deviceId, byte mask) {
@@ -437,13 +473,14 @@ void displayMatrix(byte deviceId, byte mask) {
       Serial.println("");
     for (j = 0; j < 8; j++)
     {
-      if (matrix[i][j] & mask)
+      if (matrix[i][j] & mask) 
         {
+          //Masking is true
           setLed(deviceId, i, j, true);
           Serial.print("1 ");
         }
       else
-        {
+        { //Masking is false
           setLed(deviceId, i, j, false);
           Serial.print("0 ");
         }
